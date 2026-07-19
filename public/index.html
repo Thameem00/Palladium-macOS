@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palladium Mac - Media Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+
+      
+      <div class="logo-area">
+        <div class="logo-icon"></div>
+        <h1>Palladium</h1>
+        <span class="badge">macOS</span>
+      </div>
+      
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="download">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download
+        </button>
+        <button class="nav-item" data-tab="library">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5V3.5A2.5 2.5 0 0 1 6.5 1H20v16H6.5a2.5 2.5 0 0 0-2.5 2.5z"/></svg>
+          Library
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></svg>
+          Settings
+        </button>
+      </nav>
+      
+      <div class="footer-info">
+        <p>Target: <code id="sidebar-target-path">~/Downloads</code></p>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      
+      <!-- TAB 1: DOWNLOAD -->
+      <section id="tab-download" class="content-tab active">
+        <header class="tab-header">
+          <h2>Media Downloader</h2>
+          <p>Extract and download video or audio from standard media links.</p>
+        </header>
+
+        <!-- URL Input Form -->
+        <div class="input-card">
+          <div class="url-input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <input type="text" id="url-input" placeholder="Paste your link here (YouTube, Twitter, TikTok, etc.)..." autocomplete="off">
+            <button id="fetch-btn" class="primary-btn">
+              <span>Fetch Details</span>
+            </button>
+          </div>
+          <p class="input-tip">Powered by your local <code>yt-dlp</code> installation.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-spinner" class="spinner-container hidden">
+          <div class="spinner"></div>
+          <p>Extracting stream metadata...</p>
+        </div>
+
+        <!-- Info & Format Selector Card -->
+        <div id="details-card" class="details-card hidden">
+          <div class="card-layout">
+            <div class="thumbnail-wrapper">
+              <img id="video-thumbnail" src="" alt="Thumbnail">
+            </div>
+            <div class="info-wrapper">
+              <h3 id="video-title">Video Title</h3>
+              <p class="uploader-label">Uploader: <span id="video-uploader">Channel Name</span></p>
+              <p class="duration-label">Duration: <span id="video-duration">0:00</span></p>
+              
+              <div class="format-selection">
+                <label for="format-select">Choose Format:</label>
+                <div class="select-wrapper">
+                  <select id="format-select">
+                    <!-- Dynamic formats -->
+                  </select>
+                </div>
+              </div>
+              
+              <button id="download-btn" class="download-action-btn">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Start Download
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Download Progress Card -->
+        <div id="progress-card" class="progress-card hidden">
+          <div class="progress-header">
+            <div>
+              <h4 id="progress-title">Downloading Media...</h4>
+              <p id="progress-status" class="status-msg">Preparing stream...</p>
+            </div>
+            <div class="percentage-badge"><span id="progress-percent">0</span>%</div>
+          </div>
+          
+          <div class="progress-bar-container">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+          
+          <div class="progress-metadata">
+            <div class="meta-item">
+              <span class="meta-label">Speed</span>
+              <span id="progress-speed" class="meta-val">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Size</span>
+              <span id="progress-size" class="meta-val">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">ETA</span>
+              <span id="progress-eta" class="meta-val">-</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LIBRARY -->
+      <section id="tab-library" class="content-tab">
+        <header class="tab-header">
+          <h2>Downloads Library</h2>
+          <p>Manage and locate your previously downloaded media.</p>
+        </header>
+
+        <div class="library-container">
+          <div id="library-empty" class="library-empty">
+            <svg class="empty-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+            <p>Your library is empty. Start downloading to build your library.</p>
+          </div>
+          
+          <div id="library-list" class="library-list hidden">
+            <!-- Dynamic items -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: SETTINGS -->
+      <section id="tab-settings" class="content-tab">
+        <header class="tab-header">
+          <h2>Settings</h2>
+          <p>Customize your download preferences, quality, behaviour, and storage.</p>
+        </header>
+
+        <div class="settings-container">
+
+          <!-- SECTION: General -->
+          <div class="settings-group-label">General</div>
+
+          <!-- Download Destination -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <div>
+                <h3>Download Destination</h3>
+                <p class="settings-desc">Choose where downloaded files are saved. Defaults to ~/Downloads on fresh install.</p>
+              </div>
+            </div>
+            <div class="settings-field">
+              <input type="text" id="download-dir-input" placeholder="/Users/username/Downloads" readonly>
+              <button id="browse-btn" class="secondary-btn"><span>Browse...</span></button>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <div>
+                <h3>Notifications</h3>
+                <p class="settings-desc">Show a system notification when a download completes or fails.</p>
+              </div>
+            </div>
+            <div class="settings-toggle-row">
+              <label for="notifications-enabled">Download completion notifications</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="notifications-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- SECTION: Download Quality -->
+          <div class="settings-group-label">Download Quality</div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <div>
+                <h3>Video Quality</h3>
+                <p class="settings-desc">Maximum resolution for video downloads. Codec and container settings determine compatibility.</p>
+              </div>
+            </div>
+            <div class="settings-row-grid">
+              <div class="settings-select-group">
+                <label>Quality</label>
+                <div class="select-wrapper">
+                  <select id="video-quality-select">
+                    <option value="best">Best (Auto)</option>
+                    <option value="p2160">4K (2160p)</option>
+                    <option value="p1440">1440p</option>
+                    <option value="p1080">1080p</option>
+                    <option value="p720">720p</option>
+                    <option value="p480">480p</option>
+                  </select>
+                </div>
+              </div>
+              <div class="settings-select-group">
+                <label>Container</label>
+                <div class="select-wrapper">
+                  <select id="video-container-select">
+                    <option value="mp4">MP4</option>
+                    <option value="mov">MOV</option>
+                    <option value="mkv">MKV</option>
+                  </select>
+                </div>
+              </div>
+              <div class="settings-select-group">
+                <label>Video Codec</label>
+                <div class="select-wrapper">
+                  <select id="video-codec-select">
+                    <option value="photosCompatible">H.264 / H.265 (Compatible)</option>
+                    <option value="h264">H.264</option>
+                    <option value="h265">H.265 / HEVC</option>
+                    <option value="av1">AV1</option>
+                    <option value="vp9">VP9</option>
+                    <option value="best">Best Available</option>
+                  </select>
+                </div>
+              </div>
+              <div class="settings-select-group">
+                <label>Audio Preset</label>
+                <div class="select-wrapper">
+                  <select id="audio-preset-select">
+                    <option value="bestCompatible">Best Compatible (AAC)</option>
+                    <option value="bestQuality">Best Quality</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <div>
+                <h3>Audio Format</h3>
+                <p class="settings-desc">Format used when downloading audio-only content.</p>
+              </div>
+            </div>
+            <div class="settings-select-group">
+              <label>Audio Format</label>
+              <div class="select-wrapper">
+                <select id="audio-format-select">
+                  <option value="mp3">MP3</option>
+                  <option value="m4a">M4A (AAC)</option>
+                  <option value="opus">Opus</option>
+                  <option value="flac">FLAC (Lossless)</option>
+                  <option value="wav">WAV (Lossless)</option>
+                  <option value="best">Best Available</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION: Download Options (Defaults) -->
+          <div class="settings-group-label">Download Options Defaults</div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <div>
+                <h3>Default Download Toggles</h3>
+                <p class="settings-desc">These determine the default state of options when starting a new download.</p>
+              </div>
+            </div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Download Playlist</span>
+                <p class="settings-desc">When a playlist URL is pasted, download all items by default.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="default-playlist">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Download Subtitles</span>
+                <p class="settings-desc">Automatically download and embed subtitles/closed captions by default.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="default-subtitles">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Embed Thumbnail</span>
+                <p class="settings-desc">Embed the video thumbnail as cover art in the downloaded file by default.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="default-embed-thumbnail">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Restore Download Defaults</span>
+                <p class="settings-desc">Reset download toggles to their default state after each download completes.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="restore-download-defaults">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- SECTION: Download Behavior -->
+          <div class="settings-group-label">Download Behaviour</div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <div>
+                <h3>Download Behaviour</h3>
+                <p class="settings-desc">Control how the downloader behaves during and after downloads.</p>
+              </div>
+            </div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Auto-Retry Failed Downloads</span>
+                <p class="settings-desc">Automatically retry a download if it fails due to a transient error.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="auto-retry-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Detailed Progress</span>
+                <p class="settings-desc">Show granular download progress stats (speed, ETA, file size) in the progress bar.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="detailed-progress-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-row-grid single-col">
+              <div class="settings-select-group">
+                <label>After Download</label>
+                <p class="settings-tiny-desc">Action to perform when download finishes.</p>
+                <div class="select-wrapper">
+                  <select id="after-download-select">
+                    <option value="doNothing">Do Nothing</option>
+                    <option value="openInFinder">Open in Finder</option>
+                    <option value="openFile">Open File</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION: History -->
+          <div class="settings-group-label">History</div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div>
+                <h3>Link History</h3>
+                <p class="settings-desc">Track recently downloaded URLs and manage library history.</p>
+              </div>
+            </div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Enable Link History</span>
+                <p class="settings-desc">Keep a record of recently used download URLs.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="link-history-enabled" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-toggle-row">
+              <div>
+                <span>Hide History Count Badge</span>
+                <p class="settings-desc">Hide the count badge on the Library tab.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="hide-history-count">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-row-grid single-col">
+              <div class="settings-select-group">
+                <label>History Limit</label>
+                <p class="settings-tiny-desc">Maximum number of items to keep in download history (1–50).</p>
+                <input type="number" id="history-limit-input" min="1" max="50" value="10" class="settings-number-input">
+              </div>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-action-row">
+              <button id="clear-history-btn" class="danger-btn">
+                <svg viewBox="0 0 24 24" class="btn-icon-sm"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Clear All History
+              </button>
+              <span class="action-hint">This removes history records only, not downloaded files.</span>
+            </div>
+          </div>
+
+          <!-- SECTION: Storage -->
+          <div class="settings-group-label">Storage</div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <div>
+          <!-- SECTION: Package Manager -->
+          <div class="settings-group-label">Package Manager</div>
+
+
+          <!-- Package Manager Card -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+              <div>
+                <h3>Package Manager</h3>
+                <p class="settings-desc">Manage installed downloader components, check versions, and download package updates.</p>
+              </div>
+            </div>
+            <div class="settings-action-row">
+              <button id="open-package-manager-btn" class="secondary-btn">
+                <svg viewBox="0 0 24 24" class="btn-icon-sm"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Open Package Manager...
+              </button>
+            </div>
+          </div>
+
+
+          <!-- SECTION: Advanced -->
+          <div class="settings-group-label">Advanced</div>
+
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <svg class="settings-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <div>
+                <h3>Extra yt-dlp Arguments</h3>
+                <p class="settings-desc">Append custom raw yt-dlp command-line arguments to every download. Use with caution.</p>
+              </div>
+            </div>
+            <textarea id="extra-args-input" class="settings-textarea" placeholder="e.g. --no-mtime --sponsorblock-remove all" spellcheck="false"></textarea>
+          </div>
+
+          <!-- Save Button -->
+          <div class="settings-save-row">
+            <button id="save-settings-btn" class="primary-btn save-btn">
+              <svg viewBox="0 0 24 24" class="btn-icon-sm"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Settings
+            </button>
+          </div>
+
+        </div>
+      </section>
+      
+    </main>
+  </div>  <!-- MODAL: URL Allowlists Manager -->
+  <div id="allowlist-modal" class="modal-overlay hidden">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2>URL Allowlists</h2>
+        <button class="close-modal-btn" id="close-allowlist-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Download URLs must match at least one enabled regex entry from the default allowlist or a custom allowlist.</p>
+        
+        <!-- Add / Import actions -->
+        <div class="modal-action-bar">
+          <button id="modal-add-allowlist-btn" class="secondary-btn">
+            <svg class="btn-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Add Allowlist
+          </button>
+          <button id="modal-paste-allowlist-btn" class="secondary-btn">
+            <svg class="btn-icon-sm" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            Paste Allowlist JSON
+          </button>
+          <button id="modal-import-allowlist-btn" class="secondary-btn">
+            <svg class="btn-icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Import Local Allowlist
+          </button>
+          <input type="file" id="allowlist-file-input" accept=".json" style="display: none;">
+          <button id="modal-refresh-allowlists-btn" class="secondary-btn">
+            <svg class="btn-icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh Allowlists
+          </button>
+        </div>
+
+        <!-- Custom Add Row (Hidden initially) -->
+        <div id="add-allowlist-row" class="modal-input-row hidden">
+          <input type="text" id="allowlist-url-input" placeholder="https://example.com/allowlist.json">
+          <button id="confirm-add-allowlist" class="primary-btn">Add</button>
+        </div>
+
+        <!-- Custom Paste Row (Hidden initially) -->
+        <div id="paste-allowlist-row" class="modal-input-row vertical hidden">
+          <textarea id="allowlist-json-textarea" placeholder='{ "version": 1, "name": "Custom", "entries": [...] }' class="settings-textarea"></textarea>
+          <button id="confirm-paste-allowlist" class="primary-btn">Import Paste</button>
+        </div>
+
+        <div class="settings-group-label" style="margin-top:20px;">Sources</div>
+        <div id="allowlist-sources-list" class="allowlist-sources-list">
+          <!-- Dynamic loaded allowlist sources -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Package Manager -->
+  <div id="package-manager-modal" class="modal-overlay hidden">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2>Package Manager</h2>
+        <button class="close-modal-btn" id="close-package-manager-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="pm-status-card">
+          <div class="pm-status-title">Status</div>
+          <div class="pm-status-value success">status: success</div>
+        </div>
+
+        <div class="settings-group-label">Installed Versions</div>
+        <div class="versions-box" id="pm-versions-box">
+          Loading installed versions...
+        </div>
+
+        <div class="settings-group-label">Update Summary</div>
+        <div class="summary-box" id="pm-summary-box">
+          All packages are up to date.
+        </div>
+
+        <div class="settings-group-label" style="margin-top:20px;">Actions</div>
+        <div class="pm-actions-list">
+          <button id="pm-check-btn" class="primary-btn action-full">Check for Updates</button>
+          <button id="pm-update-btn" class="secondary-btn action-full">Update Packages</button>
+          <p class="action-caption">Long press Update Packages to set custom package versions.</p>
+          <button id="pm-restore-btn" class="danger-btn action-full">Restore Pip Packages</button>
+          <p class="action-caption">Removes payload-installed packages and reinstalls runtime packages with pip.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <script src="app.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

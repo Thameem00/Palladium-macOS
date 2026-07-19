@@ -1,0 +1,13 @@
+{
+  "name": "palladium-mac",
+  "version": "1.0.0",
+  "description": "Local Media Downloader App based on YT-DLP for macOS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "private": true
+}
