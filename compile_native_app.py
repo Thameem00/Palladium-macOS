@@ -3,11 +3,24 @@ import subprocess
 import shutil
 
 def main():
-    scratch_dir = "/Users/thameemrahman/.gemini/antigravity-cli/brain/50e1d439-a0f1-453b-9560-88678acaaa9b/scratch"
-    swift_file = os.path.join(scratch_dir, "main.swift")
-    binary_path = os.path.join(scratch_dir, "Palladium")
+    # Detect directories dynamically
+    home_dir = os.path.expanduser("~")
+    project_dir = os.path.dirname(os.path.abspath(__file__))
     
-    target_binary = "/Users/thameemrahman/Applications/Palladium.app/Contents/MacOS/Palladium"
+    # App Bundle Structure
+    app_dir = os.path.join(home_dir, "Applications/Palladium.app")
+    contents_dir = os.path.join(app_dir, "Contents")
+    macos_dir = os.path.join(contents_dir, "MacOS")
+    resources_dir = os.path.join(contents_dir, "Resources")
+    
+    print(f"Creating app bundle directories at {app_dir}...")
+    os.makedirs(macos_dir, exist_ok=True)
+    os.makedirs(resources_dir, exist_ok=True)
+    
+    # Temporary compilation files
+    swift_file = "/tmp/main.swift"
+    binary_path = "/tmp/Palladium"
+    target_binary = os.path.join(macos_dir, "Palladium")
     
     # Swift code for the native window app
     swift_code = """import Cocoa
@@ -20,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var selectedPort: Int = 3000
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // 1. Find a free port dynamically
+        // 1. Find a free port dynamically starting at 3000
         selectedPort = findFreePort(startingAt: 3000)
         
         // 2. Start the Node.js server on that port
@@ -49,12 +62,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Match the webview background
         webView.setValue(false, forKey: "drawsBackground")
-        
         window.contentView = webView
 
-        // Load the local server URL (wait 1 second for server startup)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            if let url = URL(string: "http://localhost:\(self.selectedPort)") {
+        // Load the local server URL (wait 1.2 seconds for server startup)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if let url = URL(string: "http://localhost:\\(self.selectedPort)") {
                 let request = URLRequest(url: url)
                 self.webView.load(request)
             }
@@ -109,7 +121,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func isPortFree(_ port: Int) -> Bool {
         let checkProcess = Process()
         checkProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
-        checkProcess.arguments = ["-i", ":\(port)", "-t"]
+        checkProcess.arguments = ["-i", ":\\(port)", "-t"]
         let pipe = Pipe()
         checkProcess.standardOutput = pipe
         try? checkProcess.run()
@@ -120,10 +132,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func startServer(on port: Int) {
-        print("Starting Node.js server on port \(port)...")
+        let resourcesPath = Bundle.main.resourcePath ?? "."
+        let serverScriptPath = (resourcesPath as NSString).appendingPathComponent("server.js")
+        let nodeExecutable = findNodeExecutable()
+        
+        print("Starting Node.js server (\\(nodeExecutable)) on port \\(port) with script \\(serverScriptPath)...")
+        
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/node")
-        process.arguments = ["/Users/thameemrahman/PalladiumMac/server.js"]
+        process.executableURL = URL(fileURLWithPath: nodeExecutable)
+        process.arguments = [serverScriptPath]
         
         // Pass the port to the Node server via environment
         var env = ProcessInfo.processInfo.environment
@@ -137,10 +154,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         do {
             try process.run()
             self.serverProcess = process
-            print("Node server started (PID \(process.processIdentifier))")
+            print("Node server started (PID \\(process.processIdentifier))")
         } catch {
-            print("Failed to start server: \(error)")
+            print("Failed to start server: \\(error)")
         }
+    }
+
+    func findNodeExecutable() -> String {
+        let paths = [
+            "/opt/homebrew/bin/node",
+            "/usr/local/bin/node",
+            "/usr/bin/node",
+            "/bin/node"
+        ]
+        for path in paths {
+            if FileManager.default.fileExists(atPath: path) {
+                return path
+            }
+        }
+        return "node" // fallback
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -156,7 +188,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 }
 
-
 // Start Cocoa Application
 let app = NSApplication.shared
 let delegate = AppDelegate()
@@ -164,7 +195,33 @@ app.delegate = delegate
 app.run()
 """
 
+    # Write Info.plist
+    info_plist_path = os.path.join(contents_dir, "Info.plist")
+    info_plist_content = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>Palladium</string>
+    <key>CFBundleIdentifier</key>
+    <string>app.getpalladium.mac</string>
+    <key>CFBundleName</key>
+    <string>Palladium</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
+"""
+    print("Writing Info.plist...")
+    with open(info_plist_path, "w", encoding="utf-8") as f:
+        f.write(info_plist_content)
+
     # Write Swift file
+    print("Writing temporary Swift code...")
     with open(swift_file, "w", encoding="utf-8") as f:
         f.write(swift_code)
         
@@ -191,13 +248,32 @@ app.run()
     shutil.copy2(binary_path, target_binary)
     os.chmod(target_binary, 0o755)
     
+    # Copy resources to Contents/Resources inside bundle
+    print("Bundling Node.js backend resources inside the app bundle...")
+    shutil.copy2(os.path.join(project_dir, "server.js"), os.path.join(resources_dir, "server.js"))
+    shutil.copy2(os.path.join(project_dir, "package.json"), os.path.join(resources_dir, "package.json"))
+    shutil.copy2(os.path.join(project_dir, "package-lock.json"), os.path.join(resources_dir, "package-lock.json"))
+    
+    # Copy folders (public and node_modules)
+    def copy_dir(folder_name):
+        src = os.path.join(project_dir, folder_name)
+        dst = os.path.join(resources_dir, folder_name)
+        if os.path.exists(src):
+            if os.path.exists(dst):
+                shutil.rmtree(dst)
+            shutil.copytree(src, dst)
+            
+    copy_dir("public")
+    copy_dir("node_modules")
+    
     # Cleanup temp files
     try: os.remove(swift_file)
     except: pass
     try: os.remove(binary_path)
     except: pass
     
-    print("Native application compiled and updated successfully!")
+    print("\nNative application compiled, bundled and updated successfully!")
+    print(f"Location: {app_dir}")
 
 if __name__ == '__main__':
     main()
