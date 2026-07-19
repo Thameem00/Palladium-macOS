@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/tfourj/Palladium/main/Palladium/Assets.xcassets/AppIcon.appiconset/Icon-1024.png" width="128" height="128" style="border-radius: 22px;" />
-
-# Palladium macOS
+# 🎬 Palladium macOS
 
 **A sleek, native macOS wrapper for the Palladium media downloader.**  
 Powered by a Node.js backend and a Swift-compiled Cocoa WebView window.
