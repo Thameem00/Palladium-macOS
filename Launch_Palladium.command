@@ -28,19 +28,29 @@ if [ -f "$DIR/bin/node" ]; then
     NODE_BIN="$DIR/bin/node"
 fi
 
+# Clear old port file
+rm -f "$DIR/.current_port"
+
 # Start the Node server directly in the background
 "$NODE_BIN" server.js &
 SERVER_PID=$!
 
-# Wait 2 seconds for the server to bind to port 3000
-sleep 2
+# Wait for the server to bind and write port
+BOUND_PORT=3000
+for i in {1..20}; do
+    if [ -f "$DIR/.current_port" ]; then
+        BOUND_PORT=$(cat "$DIR/.current_port")
+        break
+    fi
+    sleep 0.2
+done
 
-# Open the browser to the application
-open "http://localhost:3000"
+# Open the browser to the bound application port
+open "http://localhost:$BOUND_PORT"
 
 # Keep the terminal window open and allow stopping the server via Ctrl+C
 echo "============================================="
-echo " Palladium Mac is running at http://localhost:3000"
+echo " Palladium Mac is running at http://localhost:$BOUND_PORT"
 echo " Press Ctrl+C in this terminal to stop the server."
 echo "============================================="
 

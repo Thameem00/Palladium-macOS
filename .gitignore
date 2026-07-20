@@ -14,6 +14,7 @@ bin/
 settings.json
 history.json
 allowlists.json
+.current_port
 
 # Operating System Files
 .DS_Store

@@ -789,7 +789,25 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-app.listen(PORT, () => {
-  console.log(`Palladium Mac server running at http://localhost:${PORT}`);
-});
+function startServer(portToTry, maxRetries = 20) {
+  const server = app.listen(portToTry, () => {
+    const actualPort = server.address().port;
+    console.log(`Palladium Mac server running at http://localhost:${actualPort}`);
+    try {
+      fs.writeFileSync(path.join(__dirname, '.current_port'), String(actualPort));
+    } catch (e) {}
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && maxRetries > 0) {
+      console.log(`Port ${portToTry} is in use, retrying on port ${portToTry + 1}...`);
+      startServer(portToTry + 1, maxRetries - 1);
+    } else {
+      console.error('Server failed to start:', err);
+    }
+  });
+}
+
+const initialPort = parseInt(process.env.PORT || '3000', 10);
+startServer(initialPort);
 
