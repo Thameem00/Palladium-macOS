@@ -36,16 +36,16 @@ No Electron. No browser tabs. No address bars. Just a clean, native window.
 
 ## Prerequisites
 
-Make sure the following are installed on your Mac before building:
+> 💡 **Zero Setup Required**: Running `bash setup.sh` automatically fetches portable standalone binaries for Node.js, `ffmpeg`, and `yt-dlp` into a local `./bin/` folder if missing. Homebrew and Xcode CLI Tools are **completely optional**.
 
-| Tool | Install Command | Purpose |
+If you prefer using system-wide tools, you can optionally pre-install them via Homebrew:
+
+| Tool | Install Command (Optional) | Purpose |
 |------|----------------|---------|
 | **Node.js** | `brew install node` | Hosts the local backend server |
 | **yt-dlp** | `brew install yt-dlp` | Core media downloading engine |
 | **ffmpeg** | `brew install ffmpeg` | Merges audio/video and embeds thumbnails |
-| **Xcode CLI Tools** | `xcode-select --install` | Required to compile the Swift wrapper |
-
-> **Homebrew** is required. If you don't have it, install it from [brew.sh](https://brew.sh).
+| **Xcode CLI Tools** | `xcode-select --install` | Compiles Swift wrapper (AppleScript fallback available) |
 
 ---
 
@@ -64,12 +64,16 @@ cd Palladium-macOS
 bash setup.sh
 ```
 
-> **Zero Prerequisites Required**: If Node.js, `ffmpeg`, or `yt-dlp` are not installed on your system, `setup.sh` automatically downloads portable standalone macOS binaries into a local `./bin/` directory and configures everything.
+`setup.sh` will:
+- Download local dependencies if missing on your Mac
+- Clear macOS security quarantine flags
+- Run `npm install`
+- Compile and install `Palladium.app` in `~/Applications/` with the custom app icon
 
-### 3. Launch or Build
+### 3. Launch
 
-- **Quick Launch**: Double-click `Launch_Palladium.command` (or run `./Launch_Palladium.command`)
-- **Build Native App Bundle**: Run `python3 compile_native_app.py` to generate `~/Applications/Palladium.app`. *(Works with or without Xcode tools installed!)*
+- Open **`Palladium.app`** from your Applications folder / Launchpad
+- Or run **`./Launch_Palladium.command`**
 
 ---
 
@@ -95,10 +99,10 @@ bash setup.sh
 └─────────────────────────────────────────┘
 ```
 
-1. On launch, the Swift wrapper calls `findFreePort()` starting at `3000`.
-2. It spawns `node server.js` with `PORT=<selected>` as an environment variable.
+1. On launch, the wrapper calls `findFreePort()` starting at `3000`.
+2. It spawns `node server.js` with `PORT=<selected>` as an environment variable (with `EADDRINUSE` auto-retry).
 3. The `WKWebView` loads `http://localhost:<PORT>` after a short startup delay.
-4. When the window is closed, `applicationWillTerminate` kills the Node process and frees the port.
+4. When the window is closed, it kills the Node server process cleanly and frees the port.
 
 ---
 
@@ -106,7 +110,10 @@ bash setup.sh
 
 ```
 Palladium-macOS/
-├── compile_native_app.py   # Build script — compiles Swift + creates .app bundle
+├── setup.sh                # 1-Step automated dependency installer & app builder
+├── Launch_Palladium.command # Portable double-click launcher
+├── compile_native_app.py   # Build script — compiles Swift/AppleScript + creates .app bundle
+├── AppIcon.icns            # macOS high-resolution app icon
 ├── server.js               # Node.js backend — API routes, yt-dlp integration
 ├── package.json            # NPM dependencies
 ├── public/
