@@ -80,12 +80,17 @@ else
     npm install
 fi
 
-# 7. Make launch script executable
+# 7. Build Native App Bundle (~/Applications/Palladium.app)
+echo "→ Compiling and creating native macOS App Bundle (Palladium.app)..."
+python3 "$DIR/compile_native_app.py"
+
+# 8. Make launch script executable
 chmod +x "$DIR/Launch_Palladium.command" "$DIR/setup.sh" 2>/dev/null || true
 
 echo "================================================================================"
 echo " SETUP COMPLETE!"
-echo " You can now launch Palladium by running:"
-echo "   - ./Launch_Palladium.command"
-echo "   - OR python3 compile_native_app.py (to build a native macOS .app bundle)"
+echo " Palladium.app has been installed to your Applications folder (~/Applications/Palladium.app)."
+echo " You can launch Palladium by:"
+echo "   1. Opening Palladium.app from Launchpad / Applications folder"
+echo "   2. Running ./Launch_Palladium.command"
 echo "================================================================================"

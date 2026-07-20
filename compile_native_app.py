@@ -208,6 +208,8 @@ app.run()
 <dict>
     <key>CFBundleExecutable</key>
     <string>Palladium</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon.icns</string>
     <key>CFBundleIdentifier</key>
     <string>app.getpalladium.mac</string>
     <key>CFBundleName</key>
@@ -315,6 +317,12 @@ end run
     if os.path.exists(os.path.join(project_dir, "package-lock.json")):
         shutil.copy2(os.path.join(project_dir, "package-lock.json"), os.path.join(resources_dir, "package-lock.json"))
     
+    icon_src = os.path.join(project_dir, "AppIcon.icns")
+    if os.path.exists(icon_src):
+        print("Bundling AppIcon.icns into app resources...")
+        shutil.copy2(icon_src, os.path.join(resources_dir, "AppIcon.icns"))
+        shutil.copy2(icon_src, os.path.join(resources_dir, "applet.icns"))
+    
     # Copy folders (public, node_modules, bin)
     def copy_dir(folder_name):
         src = os.path.join(project_dir, folder_name)
@@ -336,6 +344,12 @@ end run
     try: os.remove("/tmp/palladium_applet.applescript")
     except: pass
     
+    # Refresh Finder icon cache
+    try:
+        subprocess.run(["touch", app_dir], check=False)
+    except:
+        pass
+
     print("\nNative application compiled, bundled and updated successfully!")
     print(f"Location: {app_dir}")
 
