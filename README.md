@@ -49,7 +49,7 @@ Make sure the following are installed on your Mac before building:
 
 ---
 
-## Installation
+## Installation (1-Step Setup for Any Mac)
 
 ### 1. Clone the Repository
 
@@ -58,26 +58,18 @@ git clone https://github.com/Thameem00/Palladium-macOS.git
 cd Palladium-macOS
 ```
 
-### 2. Install Node.js Dependencies
+### 2. Run Automatic Setup
 
 ```bash
-npm install
+bash setup.sh
 ```
 
-### 3. Compile & Build the Native App
+> **Zero Prerequisites Required**: If Node.js, `ffmpeg`, or `yt-dlp` are not installed on your system, `setup.sh` automatically downloads portable standalone macOS binaries into a local `./bin/` directory and configures everything.
 
-```bash
-python3 compile_native_app.py
-```
+### 3. Launch or Build
 
-This script will:
-- Compile the Swift wrapper into a native binary
-- Create `~/Applications/Palladium.app` with a proper `Info.plist`
-- Bundle `server.js`, `public/`, and `node_modules/` inside the app package
-
-### 4. Launch
-
-Double-click **`Palladium.app`** from your Applications folder or Dock.
+- **Quick Launch**: Double-click `Launch_Palladium.command` (or run `./Launch_Palladium.command`)
+- **Build Native App Bundle**: Run `python3 compile_native_app.py` to generate `~/Applications/Palladium.app`. *(Works with or without Xcode tools installed!)*
 
 ---
 

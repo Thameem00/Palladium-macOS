@@ -3,12 +3,27 @@ const { spawn, exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure that Homebrew and local binary paths are always present in PATH (so ffmpeg/ffprobe can be located by yt-dlp when launched via Cocoa wrappers)
-process.env.PATH = `/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${process.env.PATH || ''}`;
+// Ensure that local bin directory, Homebrew, and system paths are always present in PATH
+const localBin = path.join(__dirname, 'bin');
+const existingPath = process.env.PATH || '';
+process.env.PATH = fs.existsSync(localBin)
+  ? `${localBin}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${existingPath}`
+  : `/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${existingPath}`;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const YTDLP_PATH = '/opt/homebrew/bin/yt-dlp';
+
+// Resolve yt-dlp binary path dynamically (local bin -> Homebrew -> system PATH)
+const getYtdlpPath = () => {
+  const localPath = path.join(__dirname, 'bin', 'yt-dlp');
+  if (fs.existsSync(localPath)) return localPath;
+  const brewPath = '/opt/homebrew/bin/yt-dlp';
+  if (fs.existsSync(brewPath)) return brewPath;
+  const usrLocalPath = '/usr/local/bin/yt-dlp';
+  if (fs.existsSync(usrLocalPath)) return usrLocalPath;
+  return 'yt-dlp';
+};
+const YTDLP_PATH = getYtdlpPath();
 
 
 const HISTORY_FILE = path.join(__dirname, 'history.json');

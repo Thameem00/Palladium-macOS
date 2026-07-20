@@ -161,6 +161,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func findNodeExecutable() -> String {
+        let resourcesPath = Bundle.main.resourcePath ?? "."
+        let bundledNode = (resourcesPath as NSString).appendingPathComponent("bin/node")
+        if FileManager.default.fileExists(atPath: bundledNode) {
+            return bundledNode
+        }
         let paths = [
             "/opt/homebrew/bin/node",
             "/usr/local/bin/node",
@@ -227,34 +232,90 @@ app.run()
         
     print("Compiling Swift application...")
     
-    # Get macOS SDK path dynamically
-    sdk_path_process = subprocess.run(["xcrun", "--show-sdk-path", "--sdk", "macosx"], capture_output=True, text=True)
-    sdk_path = sdk_path_process.stdout.strip()
-    
-    compile_cmd = ["swiftc", "-O"]
-    if sdk_path:
-        compile_cmd.extend(["-sdk", sdk_path])
-    compile_cmd.extend([swift_file, "-o", binary_path])
-    
-    result = subprocess.run(compile_cmd, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        print("Compilation failed:")
-        print(result.stderr)
-        return
+    compile_success = False
+    try:
+        # Get macOS SDK path dynamically
+        sdk_path_process = subprocess.run(["xcrun", "--show-sdk-path", "--sdk", "macosx"], capture_output=True, text=True)
+        sdk_path = sdk_path_process.stdout.strip()
         
-    # Copy binary to App Bundle
-    print(f"Copying executable to {target_binary}...")
-    shutil.copy2(binary_path, target_binary)
-    os.chmod(target_binary, 0o755)
+        compile_cmd = ["swiftc", "-O"]
+        if sdk_path:
+            compile_cmd.extend(["-sdk", sdk_path])
+        compile_cmd.extend([swift_file, "-o", binary_path])
+        
+        result = subprocess.run(compile_cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            compile_success = True
+            print(f"Copying executable to {target_binary}...")
+            shutil.copy2(binary_path, target_binary)
+            os.chmod(target_binary, 0o755)
+        else:
+            print("Swift compilation failed:")
+            print(result.stderr)
+    except Exception as e:
+        print(f"Swift compiler error: {e}")
+
+    # Fallback to AppleScriptObjC via osacompile if swiftc is unavailable
+    if not compile_success:
+        print("\n⚠️  Xcode CLI Tools (swiftc) unavailable or failed.")
+        print("→ Falling back to native AppleScriptObjC app bundle via osacompile (no Xcode required)...")
+        applescript_source = f"""
+use framework "Foundation"
+use framework "AppKit"
+use framework "WebKit"
+
+on run
+    do shell script "/usr/bin/pkill -f 'node server.js' || true"
+    set projectDir to "{project_dir}"
     
+    set nodePath to "node"
+    if exists posix file (projectDir & "/bin/node") then
+        set nodePath to projectDir & "/bin/node"
+    end if
+    
+    do shell script "/bin/bash -c 'cd " & quoted form of projectDir & " && " & quoted form of nodePath & " server.js > /dev/null 2>&1 &'"
+    delay 1.5
+    
+    set myApp to current application's NSApplication's sharedApplication()
+    myApp's setActivationPolicy:(current application's NSApplicationActivationPolicyRegular)
+    
+    set windowStyle to (current application's NSWindowStyleMaskTitled as integer) + (current application's NSWindowStyleMaskClosable as integer) + (current application's NSWindowStyleMaskMiniaturizable as integer) + (current application's NSWindowStyleMaskResizable as integer)
+    set myWindow to current application's NSWindow's alloc()'s initWithContentRect:{{{{0, 0}}, {{{{1100, 720}}}} styleMask:windowStyle backing:(current application's NSBackingStoreBuffered) defer:false
+    myWindow's setTitle:"Palladium"
+    myWindow's setMinSize:{{800, 550}}
+    myWindow's performSelector:"center"
+    
+    set webView to current application's WKWebView's alloc()'s initWithFrame:{{{{0, 0}}, {{{{1100, 720}}}}
+    set targetURL to current application's NSURL's URLWithString:"http://localhost:3000"
+    set request to current application's NSURLRequest's requestWithURL:targetURL
+    webView's loadRequest:request
+    
+    myWindow's setContentView:webView
+    myWindow's makeKeyAndOrderFront:nil
+    myApp's activateIgnoringOtherApps:true
+    
+    myApp's performSelector:"run"
+end run
+"""
+        temp_applescript = "/tmp/palladium_applet.applescript"
+        with open(temp_applescript, "w", encoding="utf-8") as f:
+            f.write(applescript_source)
+        
+        osa_res = subprocess.run(["osacompile", "-o", app_dir, temp_applescript], capture_output=True, text=True)
+        if osa_res.returncode == 0:
+            print("✓ Native AppleScriptObjC application bundle generated successfully!")
+        else:
+            print("❌ AppleScript compilation failed:", osa_res.stderr)
+            return
+
     # Copy resources to Contents/Resources inside bundle
     print("Bundling Node.js backend resources inside the app bundle...")
     shutil.copy2(os.path.join(project_dir, "server.js"), os.path.join(resources_dir, "server.js"))
     shutil.copy2(os.path.join(project_dir, "package.json"), os.path.join(resources_dir, "package.json"))
-    shutil.copy2(os.path.join(project_dir, "package-lock.json"), os.path.join(resources_dir, "package-lock.json"))
+    if os.path.exists(os.path.join(project_dir, "package-lock.json")):
+        shutil.copy2(os.path.join(project_dir, "package-lock.json"), os.path.join(resources_dir, "package-lock.json"))
     
-    # Copy folders (public and node_modules)
+    # Copy folders (public, node_modules, bin)
     def copy_dir(folder_name):
         src = os.path.join(project_dir, folder_name)
         dst = os.path.join(resources_dir, folder_name)
@@ -265,11 +326,14 @@ app.run()
             
     copy_dir("public")
     copy_dir("node_modules")
+    copy_dir("bin")
     
     # Cleanup temp files
     try: os.remove(swift_file)
     except: pass
     try: os.remove(binary_path)
+    except: pass
+    try: os.remove("/tmp/palladium_applet.applescript")
     except: pass
     
     print("\nNative application compiled, bundled and updated successfully!")
